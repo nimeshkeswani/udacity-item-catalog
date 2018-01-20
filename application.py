@@ -435,32 +435,40 @@ def api_login(provider):
         return 'Unrecoginized Provider'
 
 #API Endpoints
-@app.route('/categories/api/json', methods = ['GET', 'POST'])
-@auth.login_required
-def categories_json():
-	if request.method == 'GET':
-		categories = session.query(Category).all()
-		return jsonify(categories = [c.serialize for c in categories])
-	if request.method == 'POST':
-		category_name = request.args.get('category_name', '')
-		if category_name is None or category_name == '':
-			return jsonify({'error' : 'Empty category name.'})
-		if session.query(Category).filter_by(category_name = category_name).first() is not None:
-			return jsonify({'error' : 'Category already exists.'})
-		new_category = Category(category_name = category_name)
-		session.add(new_category)
-		session.commit()
-		return jsonify({'category' : new_category.serialize})
+@app.route('/categories/api/json', methods = ['GET'])
+def categories_json_get():
+	categories = session.query(Category).all()
+	return jsonify(categories = [c.serialize for c in categories])
 
-
-@app.route('/categories/<int:category_id>/api/json', methods = ['GET', 'PUT', 'DELETE'])
+@app.route('/categories/api/json', methods = ['POST'])
 @auth.login_required
-def category_json(category_id):
+def categories_json_post():
+	category_name = request.args.get('category_name', '')
+	if category_name is None or category_name == '':
+		return jsonify({'error' : 'Empty category name.'})
+	if session.query(Category).filter_by(category_name = category_name).first() is not None:
+		return jsonify({'error' : 'Category already exists.'})
+	new_category = Category(category_name = category_name)
+	session.add(new_category)
+	session.commit()
+	return jsonify({'category' : new_category.serialize})
+
+@app.route('/categories/<int:category_id>/api/json', methods = ['GET'])
+def category_json_get(category_id):
 	category = session.query(Category).filter_by(category_id = category_id).first()
 	if category is None:
 		return jsonify({'error' : 'No Category with id %s.' % category_id})
-	if request.method == 'GET':
-		return jsonify({'category' : category.serialize})
+	return jsonify({'category' : category.serialize})
+
+@app.route('/categories/<int:category_id>/api/json', methods = ['PUT', 'DELETE'])
+@auth.login_required
+def category_json_modify(category_id):
+	category = session.query(Category).filter_by(category_id = category_id).first()
+	user = g.user
+	if category is None:
+		return jsonify({'error' : 'No Category with id %s.' % category_id})
+	if user.user_id != category.user_id:
+		return jsonify({'error' : 'You cannot make changes.'})
 	if request.method == 'PUT':
 		category_name = request.args.get('category_name', '')
 		if category_name is None or category_name == '':
@@ -473,33 +481,42 @@ def category_json(category_id):
 		session.commit()
 		return jsonify({'message' : 'Category %s has been deleted' % category.category_name})
 
-@app.route('/items/api/json', methods = ['GET', 'POST'])
-@auth.login_required
-def items_json():
-	if request.method == 'GET':
-		items = session.query(Item).all()
-		return jsonify(items = [i.serialize for i in items])
-	if request.method == 'POST':
-		item_name = request.args.get('item_name', '')
-		item_description = request.args.get('item_description', '')
-		category_id = request.args.get('category_id', '')
-		if item_name is None or item_name == '' or category_id is None or category_id == '':
-			return jsonify({'error' : 'Empty item name or category name or both.'})
-		if session.query(Item).filter_by(item_name = item_name).filter_by(category_id = category_id).first() is not None:
-			return jsonify({'error' : 'Item already exists in the Category.'})
-		new_item = Item(item_name = item_name, category_id = category_id, item_description = item_description)
-		session.add(new_item)
-		session.commit()
-		return jsonify({'item' : new_item.serialize})
+@app.route('/items/api/json', methods = ['GET'])
+def items_json_get():
+	items = session.query(Item).all()
+	return jsonify(items = [i.serialize for i in items])
 
-@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods = ['GET', 'PUT', 'DELETE'])
+@app.route('/items/api/json', methods = ['POST'])
 @auth.login_required
-def item_json(category_id, item_id):
+def items_json_post():
+	item_name = request.args.get('item_name', '')
+	item_description = request.args.get('item_description', '')
+	category_id = request.args.get('category_id', '')
+	if item_name is None or item_name == '' or category_id is None or category_id == '':
+		return jsonify({'error' : 'Empty item name or category name or both.'})
+	if session.query(Item).filter_by(item_name = item_name).filter_by(category_id = category_id).first() is not None:
+		return jsonify({'error' : 'Item already exists in the Category.'})
+	new_item = Item(item_name = item_name, category_id = category_id, item_description = item_description)
+	session.add(new_item)
+	session.commit()
+	return jsonify({'item' : new_item.serialize})
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods = ['GET'])
+def item_json_get(category_id, item_id):
 	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
 	if item is None:
 		return jsonify({'error' : 'No Item with id %s and Category id %s.' % (item_id, category_id)})
-	if request.method == 'GET':
-		return jsonify({'item' : item.serialize})
+	return jsonify({'item' : item.serialize})
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods = ['PUT', 'DELETE'])
+@auth.login_required
+def item_json_modify(category_id, item_id):
+	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
+	user = g.user
+	if item is None:
+		return jsonify({'error' : 'No Item with id %s and Category id %s.' % (item_id, category_id)})
+	if user.user_id != item.user_id:
+		return jsonify({'error' : 'You cannot make changes.'})
 	if request.method == 'PUT':
 		item_name = request.args.get('item_name', '')
 		item_description = request.args.get('item_description', '')
@@ -518,8 +535,10 @@ def item_json(category_id, item_id):
 		return jsonify({'message' : 'Item %s in Category %s has been deleted' % (item.item_name, item.category_id)})
 
 @app.route('/categories/<int:category_id>/items/api/json')
-@auth.login_required
 def category_items_json(category_id):
+	category = session.query(Category).filter_by(category_id = category_id).first()
+	if category is None:
+		return jsonify({'error' : 'No Category with id %s.' % category_id})
 	items = session.query(Item).filter_by(category_id = category_id).all()
 	return jsonify(items = [i.serialize for i in items])
 
