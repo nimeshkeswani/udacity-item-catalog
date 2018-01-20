@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <!--LOAD PRE-REQUISITES FOR GOOGLE SIGN IN -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  <script src="//apis.google.com/js/platform.js?onload=start"> </script>
+  <!-- END PRE-REQUISITES FOR GOOGLE SIGN IN -->
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body>
+  	<div>
+  		<p>
+  			<a href = "{{url_for('home')}}">Home</a>
+  		</p>
+      {%if 'username' not in session %}
+      <p>
+        <a href = "{{url_for('login')}}">Log In</a>
+      </p>
+      {% else %}
+      <p>
+        <a href="{{url_for('gdisconnect')}}">Logout </a>
+      </p>
+      {% endif %}
+  	</div>
+  	<div id="messages">
+		{% with messages = get_flashed_messages() %}
+		{% if messages %}
+
+		<ul>
+		{% for message in messages %}
+		  <li><strong>{{message}}</strong></li>
+		  {% endfor %}
+		</ul>
+		{% endif %}
+		{% endwith %}
+	</div>
+    <div id="content">
+    	{% block content %}
+    	{% endblock %}
+    </div>
+  </body>
+</html>

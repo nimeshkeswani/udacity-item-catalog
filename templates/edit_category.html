@@ -1,0 +1,8 @@
+{% extends "base_template.html" %}
+{% block content %}
+<h4>Category Details:</h4>
+		<form action="{{url_for('edit_category', category_id = category.category_id)}}" method = "POST">
+			<label>Category Name: </label><input type='text' name='category_name' placeholder="{{category.category_name}}">
+			<input type='submit' value='Edit'>
+		</form >
+{% endblock %}

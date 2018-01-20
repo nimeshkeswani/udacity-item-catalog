@@ -1,0 +1,13 @@
+{% extends "base_template.html" %}
+{% block content %}
+	<h1>Items</h1>
+	{% if items %}
+	{% for item in items %}
+	<ul>
+	<l1><a href = "{{url_for('item', category_id = item.category.category_id, item_id = item.item_id) }}">{{ item.item_name }}</a></l1>
+	</ul>
+	{% endfor %}
+	{% else %}
+	No Items Present.
+	{% endif %}
+{% endblock %}

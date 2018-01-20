@@ -1,0 +1,9 @@
+{% extends "base_template.html" %}
+{% block content %}
+{% if item %}
+<h1>{{ item.item_name }}</h1>
+Item Description - {{ item.item_description }}<br>
+Category ID - {{ item.category_id }}<br>
+Category Name - {{ item.category.category_name }}<br>
+{% endif %}
+{% endblock %}

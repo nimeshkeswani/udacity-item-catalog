@@ -1,0 +1,7 @@
+{% extends "base_template.html" %}
+{% block content %}
+<h4>Are you sure you want to delete item {{ item.item_name }} from category {{ item.category.category_name }}?</h4>
+		<form action="{{url_for('delete_item', category_id = item.category.category_id, item_id = item.item_id)}}" method = "POST">
+			<input type='submit' value='Delete'>
+		</form >
+{% endblock %}
