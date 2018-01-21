@@ -3,14 +3,20 @@
 	<h1>Categories</h1>
 	{% if session['email'] %}<p><a href="{{url_for('add_category')}}" method="GET">Add a Category</a></p>{% endif %}
 	{% if categories %}
-	{% for category in categories %}
-	<ul>
-	<l1><a href = "{{url_for('category_items', category_id = category.category_id) }}">{{ category.category_name }}</a>
-		{% if session['email'] and session['user_id'] == category.user_id %}<a href="{{url_for('edit_category', category_id = category.category_id)}}"">Edit</a>
-		<a href="{{url_for('delete_category', category_id = category.category_id)}}"">Delete</a>{% endif %}
-	</l1>
-	</ul>
-	{% endfor %}
+	<table cellspacing="10">
+		{% for category in categories %}
+		<tr height="40px">
+			<td width="400">
+				<a href = "{{url_for('category_items', category_id = category.category_id) }}">{{ category.category_name }}</a><br>
+				{% if session['email'] and session['user_id'] == category.user_id %}
+				<a href="{{url_for('edit_category', category_id = category.category_id)}}""><img height="40%" title="Edit" src="{{ url_for('static', filename='icons/edit.png') }}"></a>
+				<a href="{{url_for('delete_category', category_id = category.category_id)}}""><img height="40%" title="Delete" src="{{ url_for('static', filename='icons/delete.png') }}"></a>
+				{% else %}
+				{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+	</table>
 	{% else %}
 	No Categories Present.
 	{% endif %}

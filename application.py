@@ -4,7 +4,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
-import json, random, string
+import json
+import random
+import string
 import httplib2
 import requests
 from flask_httpauth import HTTPBasicAuth
@@ -21,7 +23,9 @@ app = Flask(__name__)
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Item Catalog"
 
+
 # Web Pages
+
 
 # Create anti-forgery state token
 @app.route('/login')
@@ -30,6 +34,7 @@ def login():
                     for x in xrange(32))
     login_session['state'] = state
     return render_template('login.html', STATE=state, CLIENT_ID=CLIENT_ID)
+
 
 # Connect to Gmail
 @app.route('/gconnect', methods=['POST'])
@@ -53,7 +58,7 @@ def gconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
-     # Check that the access token is valid.
+    # Check that the access token is valid.
     access_token = credentials.access_token
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s' % access_token)
     h = httplib2.Http()
@@ -122,8 +127,8 @@ def gconnect():
     print "done!"
     return output
 
-# User Helper Functions
 
+# User Helper Functions
 def createUser(login_session):
     new_user = User(username=login_session['username'], user_email=login_session['email'], user_picture=login_session['picture'])
     session.add(new_user)
@@ -144,8 +149,8 @@ def getUserID(email):
     except:
         return None
 
-# DISCONNECT - Revoke a current user's token and reset their login_session
 
+# DISCONNECT - Revoke a current user's token and reset their login_session
 @app.route('/gdisconnect')
 def gdisconnect():
     # Only disconnect a connected user.
@@ -158,7 +163,7 @@ def gdisconnect():
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     if result['status'] == '200':
-    	del login_session['access_token']
+        del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
@@ -166,9 +171,9 @@ def gdisconnect():
         del login_session['provider']
         del login_session['state']
         del login_session['user_id']
-        #response = make_response(json.dumps('Successfully disconnected.'), 200)
-        #response.headers['Content-Type'] = 'application/json'
-        #return response
+        # response = make_response(json.dumps('Successfully disconnected.'), 200)
+        # response.headers['Content-Type'] = 'application/json'
+        # return response
         flash("User successfully disconnected.")
         return redirect(url_for('home'))
     else:
@@ -176,44 +181,51 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
+
 @app.route('/')
 def home():
-	return render_template('home.html')
+    return render_template('home.html')
+
 
 @app.route('/categories')
 def categories():
-	categories = session.query(Category).all()
-	return render_template('categories.html', categories = categories)
+    categories = session.query(Category).all()
+    return render_template('categories.html', categories=categories)
+
 
 @app.route('/items')
 def items():
-	items = session.query(Item).all()
-	return render_template('items.html', items = items)
+    items = session.query(Item).all()
+    return render_template('items.html', items=items)
+
 
 @app.route('/categories/<int:category_id>/items')
 def category_items(category_id):
-	items = session.query(Item).filter_by(category_id = category_id).all()
-	return render_template('category_items.html', items = items)
+    category = session.query(Category).filter_by(category_id=category_id).one()
+    items = session.query(Item).filter_by(category_id=category_id).all()
+    return render_template('category_items.html', items=items, category=category)
+
 
 @app.route('/categories/<int:category_id>/items/<int:item_id>')
 def item(category_id, item_id):
-	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
-	return render_template('item_details.html', item = item)
+    item = session.query(Item).filter_by(category_id=category_id).filter_by(item_id=item_id).first()
+    return render_template('item_details.html', item=item)
 
-@app.route('/categories/add', methods = ['GET', 'POST'])
+
+@app.route('/categories/add', methods=['GET', 'POST'])
 def add_category():
-	if 'email' not in login_session:
-		flash("You need to log in.")
-		return redirect(url_for('login'))
+    if 'email' not in login_session:
+        flash("You need to log in.")
+        return redirect(url_for('login'))
 	if request.method == 'POST':
 		category_name = request.form['category_name']
 		if category_name is None or category_name == '':
 			flash("Category Name cannot be empty.")
 			return redirect(url_for('add_category'))
-		if session.query(Category).filter_by(category_name = category_name).first() is not None:
+		if session.query(Category).filter_by(category_name=category_name).first() is not None:
 			flash("Category already exists.")
 			return redirect(url_for('add_category'))
-		new_category = Category(category_name = category_name, user_id = login_session['user_id'])
+		new_category = Category(category_name=category_name, user_id=login_session['user_id'])
 		session.add(new_category)
 		session.commit()
 		flash("Category %s has been added." % category_name)
@@ -221,12 +233,13 @@ def add_category():
 	else:
 		return render_template('add_category.html')
 
-@app.route('/categories/<int:category_id>/edit', methods = ['GET', 'POST'])
+
+@app.route('/categories/<int:category_id>/edit', methods=['GET', 'POST'])
 def edit_category(category_id):
 	if 'email' not in login_session:
 		flash("You need to log in.")
 		return redirect(url_for('login'))
-	category = session.query(Category).filter_by(category_id = category_id).first()
+	category = session.query(Category).filter_by(category_id=category_id).first()
 	if category.user_id != login_session['user_id']:
 		flash("You cannot edit this.")
 		return redirect(url_for('home'))
@@ -235,20 +248,21 @@ def edit_category(category_id):
 		category_name = request.form['category_name']
 		if category_name is None or category_name == '':
 			flash("Category Name cannot be empty.")
-			return redirect(url_for('edit_category', category_id = category.category_id))
+			return redirect(url_for('edit_category', category_id=category.category_id))
 		category.category_name = category_name
 		session.commit()
 		flash("Category %s has been updated." % old_category_name)
 		return redirect(url_for('categories'))
 	else:
-		return render_template('edit_category.html', category = category)
+		return render_template('edit_category.html', category=category)
 
-@app.route('/categories/<int:category_id>/delete', methods = ['GET', 'POST'])
+
+@app.route('/categories/<int:category_id>/delete', methods=['GET', 'POST'])
 def delete_category(category_id):
 	if 'email' not in login_session:
 		flash("You need to log in.")
 		return redirect(url_for('login'))
-	category = session.query(Category).filter_by(category_id = category_id).first()
+	category = session.query(Category).filter_by(category_id=category_id).first()
 	if category.user_id != login_session['user_id']:
 		flash("You cannot delete this.")
 		return redirect(url_for('home'))
@@ -258,9 +272,10 @@ def delete_category(category_id):
 		flash("Category %s has been deleted." % category.category_name)
 		return redirect(url_for('categories'))
 	else:
-		return render_template('delete_category.html', category = category)
+		return render_template('delete_category.html', category=category)
 
-@app.route('/items/add', methods = ['GET', 'POST'])
+
+@app.route('/items/add', methods=['GET', 'POST'])
 def add_item():
 	if 'email' not in login_session:
 		flash("You need to log in.")
@@ -272,10 +287,10 @@ def add_item():
 		if item_name is None or item_name == '' or category_id is None or category_id == '':
 			flash("Empty item name or category name or both.")
 			return redirect(url_for('add_item'))
-		if session.query(Item).filter_by(item_name = item_name).filter_by(category_id = category_id).first() is not None:
+		if session.query(Item).filter_by(item_name=item_name).filter_by(category_id=category_id).first() is not None:
 			flash("Item already exists in the Category.")
 			return redirect(url_for('add_item'))
-		new_item = Item(item_name = item_name, item_description = item_description, category_id = category_id, user_id = login_session['user_id'])
+		new_item = Item(item_name=item_name, item_description=item_description, category_id=category_id, user_id=login_session['user_id'])
 		session.add(new_item)
 		session.commit()
 		flash("Item %s has been added." % item_name)
@@ -286,14 +301,15 @@ def add_item():
 			flash("No Categories present. Please add a category first.")
 			return redirect(url_for('items'))
 		else:
-			return render_template('add_item.html', categories = categories)
+			return render_template('add_item.html', categories=categories)
 
-@app.route('/categories/<int:category_id>/items/<int:item_id>/edit', methods = ['GET', 'POST'])
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/edit', methods=['GET', 'POST'])
 def edit_item(category_id, item_id):
 	if 'email' not in login_session:
 		flash("You need to log in.")
 		return redirect(url_for('login'))
-	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
+	item = session.query(Item).filter_by(category_id=category_id).filter_by(item_id=item_id).first()
 	if item.user_id != login_session['user_id']:
 		flash("You cannot edit this.")
 		return redirect(url_for('home'))
@@ -313,14 +329,15 @@ def edit_item(category_id, item_id):
 		return redirect(url_for('items'))
 	else:
 		categories = session.query(Category).all()
-		return render_template('edit_item.html', item = item, categories = categories)
+		return render_template('edit_item.html', item=item, categories=categories)
 
-@app.route('/categories/<int:category_id>/items/<int:item_id>/delete', methods = ['GET', 'POST'])
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/delete', methods=['GET', 'POST'])
 def delete_item(category_id, item_id):
 	if 'email' not in login_session:
 		flash("You need to log in.")
 		return redirect(url_for('login'))
-	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
+	item = session.query(Item).filter_by(category_id=category_id).filter_by(item_id=item_id).first()
 	if item.user_id != login_session['user_id']:
 		flash("You cannot delete this.")
 		return redirect(url_for('home'))
@@ -332,24 +349,27 @@ def delete_item(category_id, item_id):
 		flash("Item %s has been delted from category %s." % (item_name, category_name))
 		return redirect(url_for('items'))
 	else:
-		return render_template('delete_item.html', item = item)
+		return render_template('delete_item.html', item=item)
+
 
 #API Authentication
 @auth.verify_password
 def verify_password(token, password):
     user_id = User.verify_auth_token(token)
     if user_id:
-        user = session.query(User).filter_by(user_id = user_id).one()
+        user = session.query(User).filter_by(user_id=user_id).one()
     else:
         return False
     g.user = user
     return True
 
+
 @app.route('/clientOAuth')
 def start():
     return render_template('clientOAuth.html', CLIENT_ID=CLIENT_ID)
 
-@app.route('/oauth/<provider>', methods = ['POST'])
+
+@app.route('/oauth/<provider>', methods=['POST'])
 def api_login(provider):
     #STEP 1 - Parse the auth code
     auth_code = request.json.get('auth_code')
@@ -416,7 +436,7 @@ def api_login(provider):
         #see if user exists, if it doesn't make a new one
         user = session.query(User).filter_by(user_email=email).first()
         if not user:
-            user = User(username = name, user_picture = picture, user_email = email)
+            user = User(username=name, user_picture=picture, user_email=email)
             session.add(user)
             session.commit()
 
@@ -434,36 +454,40 @@ def api_login(provider):
     else:
         return 'Unrecoginized Provider'
 
+
 #API Endpoints
-@app.route('/categories/api/json', methods = ['GET'])
+@app.route('/categories/api/json', methods=['GET'])
 def categories_json_get():
 	categories = session.query(Category).all()
-	return jsonify(categories = [c.serialize for c in categories])
+	return jsonify(categories=[c.serialize for c in categories])
 
-@app.route('/categories/api/json', methods = ['POST'])
+
+@app.route('/categories/api/json', methods=['POST'])
 @auth.login_required
 def categories_json_post():
 	category_name = request.args.get('category_name', '')
 	if category_name is None or category_name == '':
 		return jsonify({'error' : 'Empty category name.'})
-	if session.query(Category).filter_by(category_name = category_name).first() is not None:
+	if session.query(Category).filter_by(category_name=category_name).first() is not None:
 		return jsonify({'error' : 'Category already exists.'})
-	new_category = Category(category_name = category_name)
+	new_category = Category(category_name=category_name)
 	session.add(new_category)
 	session.commit()
 	return jsonify({'category' : new_category.serialize})
 
-@app.route('/categories/<int:category_id>/api/json', methods = ['GET'])
+
+@app.route('/categories/<int:category_id>/api/json', methods=['GET'])
 def category_json_get(category_id):
-	category = session.query(Category).filter_by(category_id = category_id).first()
+	category = session.query(Category).filter_by(category_id=category_id).first()
 	if category is None:
 		return jsonify({'error' : 'No Category with id %s.' % category_id})
 	return jsonify({'category' : category.serialize})
 
-@app.route('/categories/<int:category_id>/api/json', methods = ['PUT', 'DELETE'])
+
+@app.route('/categories/<int:category_id>/api/json', methods=['PUT', 'DELETE'])
 @auth.login_required
 def category_json_modify(category_id):
-	category = session.query(Category).filter_by(category_id = category_id).first()
+	category = session.query(Category).filter_by(category_id=category_id).first()
 	user = g.user
 	if category is None:
 		return jsonify({'error' : 'No Category with id %s.' % category_id})
@@ -481,12 +505,14 @@ def category_json_modify(category_id):
 		session.commit()
 		return jsonify({'message' : 'Category %s has been deleted' % category.category_name})
 
-@app.route('/items/api/json', methods = ['GET'])
+
+@app.route('/items/api/json', methods=['GET'])
 def items_json_get():
 	items = session.query(Item).all()
-	return jsonify(items = [i.serialize for i in items])
+	return jsonify(items=[i.serialize for i in items])
 
-@app.route('/items/api/json', methods = ['POST'])
+
+@app.route('/items/api/json', methods=['POST'])
 @auth.login_required
 def items_json_post():
 	item_name = request.args.get('item_name', '')
@@ -494,24 +520,26 @@ def items_json_post():
 	category_id = request.args.get('category_id', '')
 	if item_name is None or item_name == '' or category_id is None or category_id == '':
 		return jsonify({'error' : 'Empty item name or category name or both.'})
-	if session.query(Item).filter_by(item_name = item_name).filter_by(category_id = category_id).first() is not None:
+	if session.query(Item).filter_by(item_name=item_name).filter_by(category_id=category_id).first() is not None:
 		return jsonify({'error' : 'Item already exists in the Category.'})
-	new_item = Item(item_name = item_name, category_id = category_id, item_description = item_description)
+	new_item = Item(item_name=item_name, category_id=category_id, item_description=item_description)
 	session.add(new_item)
 	session.commit()
 	return jsonify({'item' : new_item.serialize})
 
-@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods = ['GET'])
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods=['GET'])
 def item_json_get(category_id, item_id):
-	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
+	item = session.query(Item).filter_by(category_id=category_id).filter_by(item_id=item_id).first()
 	if item is None:
 		return jsonify({'error' : 'No Item with id %s and Category id %s.' % (item_id, category_id)})
 	return jsonify({'item' : item.serialize})
 
-@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods = ['PUT', 'DELETE'])
+
+@app.route('/categories/<int:category_id>/items/<int:item_id>/api/json', methods=['PUT', 'DELETE'])
 @auth.login_required
 def item_json_modify(category_id, item_id):
-	item = session.query(Item).filter_by(category_id = category_id).filter_by(item_id = item_id).first()
+	item = session.query(Item).filter_by(category_id=category_id).filter_by(item_id=item_id).first()
 	user = g.user
 	if item is None:
 		return jsonify({'error' : 'No Item with id %s and Category id %s.' % (item_id, category_id)})
@@ -534,13 +562,15 @@ def item_json_modify(category_id, item_id):
 		session.commit()
 		return jsonify({'message' : 'Item %s in Category %s has been deleted' % (item.item_name, item.category_id)})
 
+
 @app.route('/categories/<int:category_id>/items/api/json')
 def category_items_json(category_id):
-	category = session.query(Category).filter_by(category_id = category_id).first()
+	category = session.query(Category).filter_by(category_id=category_id).first()
 	if category is None:
 		return jsonify({'error' : 'No Category with id %s.' % category_id})
-	items = session.query(Item).filter_by(category_id = category_id).all()
-	return jsonify(items = [i.serialize for i in items])
+	items = session.query(Item).filter_by(category_id=category_id).all()
+	return jsonify(items=[i.serialize for i in items])
+
 
 if __name__ == '__main__':
 	app.secret_key = 'super_secret_key'
