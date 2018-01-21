@@ -38,7 +38,7 @@ def login():
     return render_template('login.html', STATE=state, CLIENT_ID=CLIENT_ID)
 
 
-# Connect to Gmail
+# Authenticate using Google
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
@@ -112,7 +112,6 @@ def gconnect():
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
-    # ADD PROVIDER TO LOGIN SESSION
     login_session['provider'] = 'google'
 
     # see if user exists, if it doesn't make a new one
