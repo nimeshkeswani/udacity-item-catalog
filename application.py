@@ -14,7 +14,8 @@ from flask_httpauth import HTTPBasicAuth
 
 auth = HTTPBasicAuth()
 
-engine = create_engine('sqlite:///item-catalog.db')
+#engine = create_engine('sqlite:///item-catalog.db')
+engine = create_engine('postgresql://catalog:catalog@localhost:5432/catalog')
 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
