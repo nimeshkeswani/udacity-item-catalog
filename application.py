@@ -1,3 +1,5 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, jsonify, request, render_template, flash, redirect,\
     url_for, session as login_session, make_response, g, abort
 from models import Base, User, Category, Item
@@ -22,7 +24,7 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 app = Flask(__name__)
 
-CLIENT_ID = json.loads(open('client_secrets.json', 'r')
+CLIENT_ID = json.loads(open(os.path.dirname(os.path.abspath(__file__)) + '/client_secrets.json', 'r')
                        .read())['web']['client_id']
 APPLICATION_NAME = "Item Catalog"
 
